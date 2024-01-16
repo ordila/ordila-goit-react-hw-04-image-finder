@@ -1,6 +1,6 @@
-import css from './ImageGalleryItem.module.css';
-import { FC } from 'react';
-import { IImageGalleryItem } from './ImageGalleryitem.types';
+import css from "./ImageGalleryItem.module.css";
+import { FC } from "react";
+import { IImageGalleryItem } from "./ImageGalleryitem.types";
 
 export const ImageGalleryItem: FC<IImageGalleryItem> = ({
   post,

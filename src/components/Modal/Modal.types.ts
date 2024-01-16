@@ -1,4 +1,3 @@
 export interface IModalProps {
-  onModalClose: () => void;
-  modalData: string;
+  onClose: () => void;
 }

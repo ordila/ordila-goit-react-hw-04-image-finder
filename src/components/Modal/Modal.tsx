@@ -1,33 +1,38 @@
-import React, { Component } from 'react';
-import css from './Modal.module.css';
-import { IModalProps } from './Modal.types';
+import { FC, useContext, useEffect } from "react";
+import css from "./Modal.module.css";
+import { IModalProps } from "./Modal.types";
+import { ModalDataContext } from "../App";
 
-export default class Modal extends Component<IModalProps> {
-  onModalClick = (event: React.MouseEvent<HTMLDivElement>) => {
+export const Modal: FC<IModalProps> = ({ onClose }) => {
+  const onModalClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
-      this.props.onModalClose();
+      onClose();
     }
   };
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.onEscClose);
-  }
+  useEffect(() => {
+    const onBtnClick = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.onEscClose);
-  }
+    window.addEventListener("keydown", onBtnClick);
+    document.body.style.overflow = "hidden";
 
-  onEscClose = () => {
-    this.props.onModalClose();
-  };
+    return () => {
+      window.removeEventListener("keydown", onBtnClick);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose]);
 
-  render() {
-    return (
-      <div className={css.overlay} onClick={this.onModalClick}>
-        <div className={css.modal}>
-          <img className={css.photo} src={this.props.modalData} alt="" />
-        </div>
+  const modalData = useContext(ModalDataContext);
+
+  return (
+    <div className={css.overlay} onClick={onModalClick}>
+      <div className={css.modal}>
+        <img className={css.photo} src={modalData} alt="" />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};

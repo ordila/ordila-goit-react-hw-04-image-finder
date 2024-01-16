@@ -22,15 +22,3 @@ export interface IPost {
   webformatURL: string;
   webformatWidth: number;
 }
-
-export interface IApp {
-  inputValue: string;
-  page: number;
-  error: null | string;
-  isLoading: boolean;
-  posts: IPost[];
-  modal: {
-    modalOpen?: boolean;
-    modalData?: string;
-  };
-}

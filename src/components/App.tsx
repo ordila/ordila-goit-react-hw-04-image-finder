@@ -1,103 +1,88 @@
 import { requestPosts } from "../helpers/api";
 
-import Modal from "./Modal/Modal";
+import { Modal } from "./Modal/Modal";
 
-import css from "./styles.module.css";
-import { Component } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Button } from "./Button/Button";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
-import { IApp } from "../types/app/app.types";
+
 import { SearchBar } from "./Searchbar/SearchBar";
 import { Loader } from "./Loader/Loader";
+import { IPost } from "@/types/app/app.types";
 
-export default class App extends Component<{}, IApp> {
-  state = {
-    inputValue: "",
-    page: 1,
-    error: null,
-    isLoading: false,
-    posts: [],
-    modal: {
-      modalOpen: false,
-      modalData: "",
-    },
+export const ModalDataContext = React.createContext(""); //USING ONLY FOR PRACTICE !
+
+export const App: FC = () => {
+  const [inputValue, setInputValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [posts, setPosts] = useState<IPost[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState("");
+  const [showBtn, setShowBtn] = useState(false);
+
+  const onModalOpen = (imageUrl: string) => {
+    setModalOpen(true);
+    setModalData(imageUrl);
   };
 
-  onModalOpen = (imageUrl: string) => {
-    this.setState({ modal: { modalOpen: true, modalData: imageUrl } });
-  };
+  useEffect(() => {
+    if (inputValue.trim() === "") {
+      return;
+    }
+    const fetchPosts = async () => {
+      try {
+        setIsLoading(true);
 
-  fetchPosts = async () => {
-    try {
-      this.setState({
-        isLoading: true,
-      });
+        const response = await requestPosts(inputValue, page);
 
-      const response = await requestPosts(
-        this.state.inputValue,
-        this.state.page
-      );
+        setPosts((prevState: IPost[]) => [...prevState, ...response.hits]);
 
-      this.setState((prevState) => ({
-        posts:
-          this.state.page > 1
-            ? [...prevState.posts, ...response.hits]
-            : [...response.hits],
-      }));
-    } catch (er) {
-      if (er instanceof Error) {
-        this.setState({ error: er.message });
+        setShowBtn(page < Math.ceil(response.totalHits / 12));
+      } catch (er) {
+        if (er instanceof Error) {
+          setError(er.message);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      this.setState({
-        isLoading: false,
-      });
-    }
+    };
+    fetchPosts();
+  }, [inputValue, page]);
+
+  const onFormSubmit = (inputValue: string) => {
+    setInputValue(inputValue);
+    setPage(1);
+    setPosts([]);
   };
 
-  async componentDidUpdate(_: {}, prevState: IApp) {
-    if (
-      prevState.inputValue !== this.state.inputValue ||
-      prevState.page !== this.state.page
-    ) {
-      this.fetchPosts();
-    }
-  }
-
-  onFormSubmit = (inputValue: string) => {
-    this.setState({ inputValue });
+  const onButtonClick = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
-  onButtonClick = () => {
-    this.setState((prevState) => ({
-      page: prevState.page + 1,
-    }));
-    console.log(this.state.page);
+  const onModalClose = () => {
+    setModalOpen(false);
   };
 
-  onModalClose = () => {
-    this.setState({ modal: { modalOpen: false } });
-  };
-  render() {
-    const {
-      posts,
-      isLoading,
-      modal: { modalData, modalOpen },
-    } = this.state;
-    return (
-      <div className={css.App}>
-        <SearchBar onFormSubmit={this.onFormSubmit} />
+  return (
+    <div>
+      <SearchBar onFormSubmit={onFormSubmit} />
 
-        <ImageGallery onModalOpen={this.onModalOpen} posts={posts} />
+      <ImageGallery onModalOpen={onModalOpen} posts={posts} />
 
-        {isLoading && <Loader isLoading={isLoading} />}
+      {isLoading && <Loader isLoading={isLoading} />}
 
-        {posts.length > 1 && <Button onButtonClick={this.onButtonClick} />}
+      {showBtn && <Button onButtonClick={onButtonClick} />}
 
-        {modalOpen && (
-          <Modal onModalClose={this.onModalClose} modalData={modalData} />
-        )}
-      </div>
-    );
-  }
-}
+      {error && <div>Error: {error}</div>}
+
+      {modalOpen && (
+        //USING ONLY FOR PRACTICE !
+        <ModalDataContext.Provider value={modalData}>
+          <Modal onClose={onModalClose} />
+        </ModalDataContext.Provider>
+      )}
+    </div>
+  );
+};
